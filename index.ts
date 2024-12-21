@@ -6,6 +6,8 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import zodToJsonSchema from "zod-to-json-schema";
+import { fakeSchemaResponse } from "./temp-debug.js";
 
 // TODO: Use a more structured schema for the GraphQL request
 const GraphQLSchema = z.object({
@@ -25,36 +27,48 @@ const server = new Server(
   }
 );
 
+const graphQLJsonSchema = zodToJsonSchema(GraphQLSchema);
+
 server.setRequestHandler(ListToolsRequestSchema, async (request) => {
   return {
     tools: [
       {
-        name: "graphql",
+        name: "query-graphql",
         description: "Query a GraphQL server",
         parameters: GraphQLSchema,
+        inputSchema: graphQLJsonSchema,
       },
     ],
   };
 });
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name !== "graphql") {
+  if (request.params.name !== "query-graphql") {
     throw new Error("Invalid tool name");
   }
 
   const { body, variables } = request.params;
 
-  // TODO: Implement the GraphQL request
-
   return {
-    result: "success",
+    content: [
+      {
+        type: "text",
+        text: "Hi claude, this is still a test so it will always return the same response",
+      },
+      {
+        type: "text",
+        text: JSON.stringify(fakeSchemaResponse, null, 2),
+      },
+    ],
   };
 });
 
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.info("Started mcp-graphql server");
+
+  // All logging needs to be output to stderr or Claude will not be able to read it
+  console.error("Started mcp-graphql server");
 }
 
 main().catch((error) => {
