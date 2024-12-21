@@ -2,6 +2,9 @@
 
 Model Context Protocol server for working with GraphQL servers.
 
+> [!CAUTION]
+> This is still work in progress
+
 ## Usage
 Run `mcp-graphql` with the correct endpoint and url for schema (introspection support WIP).
 
@@ -10,16 +13,25 @@ Run `mcp-graphql` with the correct endpoint and url for schema (introspection su
 SCHEMA_URL=http://localhost:3000/schema.graphql mcp-graphql http://localhost:3000/graphql
 ```
 
+## Goals
+This should be usable as a generic MCP server for any type of GraphQL instance and will also have tooling to create your own more specific GraphQL MCP servers (e.g. restrict queries and mutations)
+
+## Development
+
 To install dependencies:
 
 ```bash
 bun install
 ```
 
-To run:
+To run for development:
 
 ```bash
-bun run index.ts
+bun dev
 ```
 
-This project was created using `bun init` in bun v1.1.41. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+To build:
+
+```bash
+bun run build
+```
