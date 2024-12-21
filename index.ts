@@ -3,6 +3,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
+  ListResourcesRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
@@ -29,6 +30,13 @@ const server = new Server(
 
 const graphQLJsonSchema = zodToJsonSchema(GraphQLSchema);
 
+server.setRequestHandler(ListResourcesRequestSchema, async (request) => {
+  // TODO: Use the GraphQL schema ss a resource for tooling
+  return {
+    resources: [],
+  };
+});
+
 server.setRequestHandler(ListToolsRequestSchema, async (request) => {
   return {
     tools: [
@@ -49,6 +57,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   const { body, variables } = request.params;
 
+  // TODO: Verify the body and variables are valid based on the schema
+
+  // TODO: Actually fetch the GraphQL server
   return {
     content: [
       {
@@ -67,8 +78,10 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  // All logging needs to be output to stderr or Claude will not be able to read it
-  console.error("Started mcp-graphql server");
+  server.sendLoggingMessage({
+    level: "info",
+    message: "Started mcp-graphql server",
+  });
 }
 
 main().catch((error) => {
