@@ -6,13 +6,15 @@
     "mcp-graphql": "./dist/index.js"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/yargs": "^17.0.33"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
+    "yargs": "^17.7.2",
     "zod": "^3.24.1",
     "zod-to-json-schema": "^3.24.1"
   },

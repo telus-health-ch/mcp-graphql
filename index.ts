@@ -7,9 +7,8 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import { fakeSchemaResponse } from "./_debug/fake-schema.js";
@@ -20,10 +19,55 @@ const GraphQLSchema = z.object({
   variables: z.string(),
 });
 
+const ConfigSchema = z.object({
+  endpoint: z.string().url().default("http://localhost:4000/graphql"),
+  headers: z.record(z.string()).default({}),
+});
+
+type Config = z.infer<typeof ConfigSchema>;
+
+function parseArgs(): Config {
+  const argv = yargs(hideBin(process.argv))
+    .option("endpoint", {
+      type: "string",
+      description: "GraphQL endpoint URL",
+      default: "http://localhost:4000/graphql",
+    })
+    .option("headers", {
+      type: "string",
+      description: "JSON string of headers to send with requests",
+      default: "{}",
+    })
+    .help()
+    .parseSync();
+
+  try {
+    return ConfigSchema.parse({
+      endpoint: argv.endpoint,
+      headers: typeof argv.headers === "string" ? JSON.parse(argv.headers) : {},
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error("Invalid configuration:");
+      console.error(
+        error.errors
+          .map((e) => `  ${e.path.join(".")}: ${e.message}`)
+          .join("\n")
+      );
+    } else {
+      console.error("Error parsing arguments:", error);
+    }
+    process.exit(1);
+  }
+}
+
+const config = parseArgs();
+
 const server = new Server(
   {
     name: "mcp-graphql",
     version: "0.0.1",
+    description: `GraphQL client for ${config.endpoint}`,
   },
   {
     capabilities: {
@@ -40,45 +84,16 @@ const server = new Server(
 const graphQLJsonSchema = zodToJsonSchema(GraphQLSchema);
 
 server.setRequestHandler(ListResourcesRequestSchema, async (request) => {
-  try {
-    // Create a secure temporary directory with a prefix
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "graphql-"));
-    const tempFilePath = path.join(tempDir, "schema.json");
-
-    // Write the schema file in the temp directory
-    fs.writeFileSync(
-      tempFilePath,
-      JSON.stringify(fakeSchemaResponse, null, 2),
+  return {
+    resources: [
       {
-        mode: 0o644, // Read/write for owner, read for others
-      }
-    );
-
-    // Log the created file path for debugging
-    server.sendLoggingMessage({
-      level: "debug",
-      message: `Created temporary schema file at: ${tempFilePath}`,
-    });
-
-    return {
-      resources: [
-        {
-          name: "graphql-schema",
-          mimeType: "application/json",
-          description: "The GraphQL schema of the server",
-          uri: new URL(`file://${tempFilePath}`).href,
-        },
-      ],
-    };
-  } catch (error) {
-    server.sendLoggingMessage({
-      level: "error",
-      message: `Failed to create temporary file: ${error}`,
-    });
-    return {
-      resources: [],
-    };
-  }
+        name: "graphql-schema",
+        mimeType: "application/json",
+        description: "The GraphQL schema of the server",
+        uri: new URL(config.endpoint).href,
+      },
+    ],
+  };
 });
 
 server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
@@ -87,26 +102,12 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     message: `ReadResourceRequestSchema: ${JSON.stringify(request, null, 2)}`,
   });
 
-  const uri = new URL(request.params.uri);
-
-  let fileContent = "";
-  try {
-    fileContent = fs.readFileSync(uri.pathname, "utf8");
-  } catch (error) {
-    server.sendLoggingMessage({
-      level: "error",
-      message: `Failed to read file: ${error}`,
-    });
-  } finally {
-    fs.unlinkSync(uri.pathname);
-  }
-
   return {
     contents: [
       {
-        uri: uri.href,
+        uri: request.params.uri,
         mimeType: "application/json",
-        text: fileContent,
+        text: JSON.stringify(fakeSchemaResponse, null, 2),
       },
     ],
   };
@@ -155,7 +156,7 @@ async function main() {
 
   server.sendLoggingMessage({
     level: "info",
-    message: "Started mcp-graphql server",
+    message: `Started mcp-graphql server for endpoint: ${config.endpoint}`,
   });
 }
 
