@@ -12,8 +12,9 @@ import { hideBin } from "yargs/helpers";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import { fakeSchemaResponse } from "./_debug/fake-schema.js";
+import { introspectionQuery } from "./helpers/introspection-query.js";
 
-// TODO: Use a more structured schema for the GraphQL request
+// TODO: Use a more structured schema for GraphQL requests possibly?
 const GraphQLSchema = z.object({
   body: z.string(),
   variables: z.string(),
@@ -102,15 +103,40 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     message: `ReadResourceRequestSchema: ${JSON.stringify(request, null, 2)}`,
   });
 
-  return {
-    contents: [
-      {
-        uri: request.params.uri,
-        mimeType: "application/json",
-        text: JSON.stringify(fakeSchemaResponse, null, 2),
+  try {
+    const response = await fetch(request.params.uri, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...config.headers,
       },
-    ],
-  };
+      body: JSON.stringify({
+        query: introspectionQuery,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`GraphQL request failed: ${response.statusText}`);
+    }
+
+    const schemaData = await response.json();
+
+    return {
+      contents: [
+        {
+          uri: request.params.uri,
+          mimeType: "application/json",
+          text: JSON.stringify(schemaData, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    server.sendLoggingMessage({
+      level: "error",
+      message: `Failed to fetch GraphQL schema: ${error}`,
+    });
+    throw new Error(`Failed to fetch GraphQL schema: ${error}`);
+  }
 });
 
 server.setRequestHandler(ListToolsRequestSchema, async (request) => {
