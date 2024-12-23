@@ -5,10 +5,14 @@ import {
   CallToolRequestSchema,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
+  ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
-import { fakeSchemaResponse } from "./temp-debug.js";
+import { fakeSchemaResponse } from "./_debug/fake-schema.js";
 
 // TODO: Use a more structured schema for the GraphQL request
 const GraphQLSchema = z.object({
@@ -23,7 +27,12 @@ const server = new Server(
   },
   {
     capabilities: {
+      logging: {},
       tools: {},
+      resources: {
+        template: true,
+        read: true,
+      },
     },
   }
 );
@@ -31,9 +40,75 @@ const server = new Server(
 const graphQLJsonSchema = zodToJsonSchema(GraphQLSchema);
 
 server.setRequestHandler(ListResourcesRequestSchema, async (request) => {
-  // TODO: Use the GraphQL schema ss a resource for tooling
+  try {
+    // Create a secure temporary directory with a prefix
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "graphql-"));
+    const tempFilePath = path.join(tempDir, "schema.json");
+
+    // Write the schema file in the temp directory
+    fs.writeFileSync(
+      tempFilePath,
+      JSON.stringify(fakeSchemaResponse, null, 2),
+      {
+        mode: 0o644, // Read/write for owner, read for others
+      }
+    );
+
+    // Log the created file path for debugging
+    server.sendLoggingMessage({
+      level: "debug",
+      message: `Created temporary schema file at: ${tempFilePath}`,
+    });
+
+    return {
+      resources: [
+        {
+          name: "graphql-schema",
+          mimeType: "application/json",
+          description: "The GraphQL schema of the server",
+          uri: new URL(`file://${tempFilePath}`).href,
+        },
+      ],
+    };
+  } catch (error) {
+    server.sendLoggingMessage({
+      level: "error",
+      message: `Failed to create temporary file: ${error}`,
+    });
+    return {
+      resources: [],
+    };
+  }
+});
+
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  server.sendLoggingMessage({
+    level: "debug",
+    message: `ReadResourceRequestSchema: ${JSON.stringify(request, null, 2)}`,
+  });
+
+  const uri = new URL(request.params.uri);
+
+  let fileContent = "";
+  try {
+    fileContent = fs.readFileSync(uri.pathname, "utf8");
+  } catch (error) {
+    server.sendLoggingMessage({
+      level: "error",
+      message: `Failed to read file: ${error}`,
+    });
+  } finally {
+    fs.unlinkSync(uri.pathname);
+  }
+
   return {
-    resources: [],
+    contents: [
+      {
+        uri: uri.href,
+        mimeType: "application/json",
+        text: fileContent,
+      },
+    ],
   };
 });
 
