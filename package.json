@@ -7,20 +7,19 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/yargs": "^17.0.33"
+    "@types/yargs": "17.0.33"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "5.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4",
-    "yargs": "^17.7.2",
-    "zod": "^3.24.1",
-    "zod-to-json-schema": "^3.24.1"
+    "@modelcontextprotocol/sdk": "1.0.4",
+    "yargs": "17.7.2",
+    "zod": "3.24.1",
+    "zod-to-json-schema": "3.24.1"
   },
   "scripts": {
     "dev": "bun --watch index.ts",
     "build": "bun build index.ts --outdir dist --target node && bun -e \"require('fs').chmodSync('dist/index.js', '755')\""
-  },
-  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
+  }
 }

@@ -11,13 +11,12 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
-import { fakeSchemaResponse } from "./_debug/fake-schema.js";
 import { introspectionQuery } from "./helpers/introspection-query.js";
 
 // TODO: Use a more structured schema for GraphQL requests possibly?
 const GraphQLSchema = z.object({
   body: z.string(),
-  variables: z.string(),
+  variables: z.string().optional(),
 });
 
 const ConfigSchema = z.object({
@@ -26,6 +25,8 @@ const ConfigSchema = z.object({
 });
 
 type Config = z.infer<typeof ConfigSchema>;
+
+type GraphQLRequest = z.infer<typeof GraphQLSchema>;
 
 function parseArgs(): Config {
   const argv = yargs(hideBin(process.argv))
@@ -159,21 +160,45 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   const { body, variables } = request.params;
 
-  // TODO: Verify the body and variables are valid based on the schema
+  server.sendLoggingMessage({
+    level: "info",
+    message: `Calling query-graphql tool with body: ${body} and variables: ${variables}`,
+  });
 
-  // TODO: Actually fetch the GraphQL server
-  return {
-    content: [
-      {
-        type: "text",
-        text: "Hi claude, this is still a test so it will always return the same response",
+  try {
+    const response = await fetch(config.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...config.headers,
       },
-      {
-        type: "text",
-        text: JSON.stringify(fakeSchemaResponse, null, 2),
-      },
-    ],
-  };
+      body: JSON.stringify({
+        query: body,
+        variables: variables ? JSON.parse(variables) : undefined,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`GraphQL request failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(data, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    server.sendLoggingMessage({
+      level: "error",
+      message: `Failed to execute GraphQL query: ${error}`,
+    });
+    throw new Error(`Failed to execute GraphQL query: ${error}`);
+  }
 });
 
 async function main() {
