@@ -15,7 +15,7 @@ import { introspectionQuery } from "./helpers/introspection-query.js";
 
 // TODO: Use a more structured schema for GraphQL requests possibly?
 const GraphQLSchema = z.object({
-  body: z.string(),
+  query: z.string(),
   variables: z.string().optional(),
 });
 
@@ -158,11 +158,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error("Invalid tool name");
   }
 
-  const { body, variables } = request.params;
+  const { query, variables } = request.params.arguments ?? {};
 
   server.sendLoggingMessage({
     level: "info",
-    message: `Calling query-graphql tool with body: ${body} and variables: ${variables}`,
+    message: `Calling query-graphql tool with body: ${query} and variables: ${variables}`,
   });
 
   try {
@@ -173,8 +173,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         ...config.headers,
       },
       body: JSON.stringify({
-        query: body,
-        variables: variables ? JSON.parse(variables) : undefined,
+        query,
+        variables,
       }),
     });
 
@@ -183,6 +183,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     const data = await response.json();
+
+    if (data.errors && data.errors.length > 0) {
+      // Contains GraphQL errors
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `The GraphQL response has errors, please fix the query: ${JSON.stringify(
+              data,
+              null,
+              2
+            )}`,
+          },
+        ],
+      };
+    }
 
     return {
       content: [
