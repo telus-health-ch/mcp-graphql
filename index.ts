@@ -12,6 +12,7 @@ import { hideBin } from "yargs/helpers";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import { introspectionQuery } from "./helpers/introspection-query.js";
+import { version } from "./helpers/package.js";
 
 // TODO: Use a more structured schema for GraphQL requests possibly?
 const GraphQLSchema = z.object({
@@ -68,7 +69,7 @@ const config = parseArgs();
 const server = new Server(
   {
     name: "mcp-graphql",
-    version: "0.0.1",
+    version: version,
     description: `GraphQL client for ${config.endpoint}`,
   },
   {
