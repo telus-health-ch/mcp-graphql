@@ -14,8 +14,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -29,8 +27,8 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use PAT as it sends a release event, built in token doesn't
+          token: ${{ secrets.RELEASE_TOKEN }}
 
   publish:
     runs-on: ubuntu-latest
