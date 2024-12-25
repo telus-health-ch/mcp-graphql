@@ -43,6 +43,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: 'https://registry.npmjs.org'
       # Might be a useless optimization but I felt like not reusing the build job
       - name: Download index.js from release
         run: |
