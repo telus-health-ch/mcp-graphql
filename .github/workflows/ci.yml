@@ -14,6 +14,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event_name != 'release'
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -32,7 +33,6 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    needs: build
     if: github.event_name == 'release'
     permissions:
       contents: read
@@ -43,11 +43,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # Get built files from release job
-      - uses: actions/download-artifact@v4
-        with:
-          name: release-${{ github.event.inputs.release }}
-          path: dist
+      # Might be a useless optimization but I felt like not reusing the build job
+      - name: Download index.js from release
+        run: |
+          gh release download ${{ github.event.release.tag_name }} --dir dist --pattern "index.js"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
