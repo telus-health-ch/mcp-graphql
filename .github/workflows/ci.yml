@@ -25,10 +25,11 @@ jobs:
       - run: bun install
       - run: bun run build
       - name: Get tag annotation
+        id: get-tag-annotation
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           TAG_MESSAGE=$(git tag -l --format='%(contents)' $TAG_NAME)
-          echo "TAG_MESSAGE=$TAG_MESSAGE" >> $GITHUB_ENV
+          echo "TAG_MESSAGE=$TAG_MESSAGE" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -36,7 +37,7 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
-          body: ${{ env.TAG_MESSAGE }}
+          body: ${{ steps.get-tag-annotation.outputs.TAG_MESSAGE }}
           append_body: true
           # Use PAT as it sends a release event, built in token doesn't
           token: ${{ secrets.RELEASE_TOKEN }}
