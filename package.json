@@ -2,7 +2,7 @@
   "name": "mcp-graphql",
   "module": "index.ts",
   "type": "module",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "repository": "github:blurrah/mcp-graphql",
   "bin": {
     "mcp-graphql": "./dist/index.js"
