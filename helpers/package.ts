@@ -6,6 +6,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Current package version so I only need to update it in one place
-export const { version } = JSON.parse(
-  readFileSync(join(__dirname, "package.json"), "utf-8")
+const { version } = JSON.parse(
+  readFileSync(join(__dirname, "../package.json"), "utf-8")
 );
+
+export function getVersion() {
+  return version;
+}

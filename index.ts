@@ -14,7 +14,7 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
-import { version } from "./helpers/package.js";
+import { getVersion } from "./helpers/package.js" with { type: "macro" };
 
 const GraphQLSchema = z.object({
   query: z.string(),
@@ -68,7 +68,7 @@ const config = parseArgs();
 const server = new Server(
   {
     name: "mcp-graphql",
-    version: version,
+    version: getVersion(),
     description: `GraphQL client for ${config.endpoint}`,
   },
   {
