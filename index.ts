@@ -7,11 +7,12 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { parse } from "graphql/language";
+import { getIntrospectionQuery } from "graphql/utilities";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
-import { introspectionQuery } from "./helpers/introspection-query.js";
 import { version } from "./helpers/package.js";
 
 // TODO: Use a more structured schema for GraphQL requests possibly?
@@ -113,7 +114,7 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         ...config.headers,
       },
       body: JSON.stringify({
-        query: introspectionQuery,
+        query: getIntrospectionQuery(),
       }),
     });
 
@@ -159,12 +160,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error("Invalid tool name");
   }
 
-  const { query, variables } = request.params.arguments ?? {};
+  const { query, variables } = GraphQLSchema.parse(request.params.arguments);
 
   server.sendLoggingMessage({
     level: "info",
     message: `Calling query-graphql tool with body: ${query} and variables: ${variables}`,
   });
+
+  // Parse the query to check for syntax errors before sending it to the server
+  try {
+    parse(query);
+  } catch (error) {
+    return {
+      isError: true,
+      content: [
+        {
+          type: "text",
+          text: `Invalid GraphQL query: ${error}`,
+        },
+      ],
+    };
+  }
 
   try {
     const response = await fetch(config.endpoint, {
