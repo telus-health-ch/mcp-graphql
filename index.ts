@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -15,7 +16,6 @@ import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import { version } from "./helpers/package.js";
 
-// TODO: Use a more structured schema for GraphQL requests possibly?
 const GraphQLSchema = z.object({
   query: z.string(),
   variables: z.string().optional(),
@@ -27,8 +27,6 @@ const ConfigSchema = z.object({
 });
 
 type Config = z.infer<typeof ConfigSchema>;
-
-type GraphQLRequest = z.infer<typeof GraphQLSchema>;
 
 function parseArgs(): Config {
   const argv = yargs(hideBin(process.argv))
