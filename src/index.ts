@@ -3,14 +3,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { parse } from "graphql/language";
-import {
-	buildClientSchema,
-	getIntrospectionQuery,
-	printSchema,
-} from "graphql/utilities";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { z } from "zod";
+import {
+	introspectEndpoint,
+	introspectLocalSchema,
+} from "./helpers/introspection.js";
 import { getVersion } from "./helpers/package.js" with { type: "macro" };
 
 const graphQLSchema = z.object({
@@ -23,6 +22,7 @@ const ConfigSchema = z.object({
 	allowMutations: z.boolean().default(false),
 	endpoint: z.string().url().default("http://localhost:4000/graphql"),
 	headers: z.record(z.string()).default({}),
+	schema: z.string().optional(),
 });
 
 type Config = z.infer<typeof ConfigSchema>;
@@ -48,6 +48,10 @@ function parseArgs(): Config {
 			type: "string",
 			description: "JSON string of headers to send with requests",
 			default: "{}",
+		})
+		.option("schema", {
+			type: "string",
+			description: "Path to a local GraphQL schema file",
 		})
 		.help()
 		.parseSync();
@@ -85,33 +89,23 @@ server.resource(
 	new URL(config.endpoint).href,
 	async (uri) => {
 		try {
-			const response = await fetch(uri, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					query: getIntrospectionQuery(),
-				}),
-			});
-
-			if (!response.ok) {
-				throw new Error(`GraphQL request failed: ${response.statusText}`);
+			let schema: string;
+			if (config.schema) {
+				schema = await introspectLocalSchema(config.schema);
+			} else {
+				schema = await introspectEndpoint(config.endpoint);
 			}
-
-			const responseJson = await response.json();
-			const schema = buildClientSchema(responseJson.data);
 
 			return {
 				contents: [
 					{
 						uri: uri.href,
-						text: printSchema(schema),
+						text: schema,
 					},
 				],
 			};
 		} catch (error) {
-			throw new Error(`Failed to fetch GraphQL schema: ${error}`);
+			throw new Error(`Failed to get GraphQL schema: ${error}`);
 		}
 	},
 );
@@ -122,28 +116,18 @@ server.tool(
 	{},
 	async () => {
 		try {
-			const response = await fetch(config.endpoint, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					query: getIntrospectionQuery(),
-				}),
-			});
-
-			if (!response.ok) {
-				throw new Error(`GraphQL request failed: ${response.statusText}`);
+			let schema: string;
+			if (config.schema) {
+				schema = await introspectLocalSchema(config.schema);
+			} else {
+				schema = await introspectEndpoint(config.endpoint);
 			}
-
-			const responseJson = await response.json();
-			const schema = buildClientSchema(responseJson.data);
 
 			return {
 				content: [
 					{
 						type: "text",
-						text: printSchema(schema),
+						text: schema,
 					},
 				],
 			};
