@@ -1,7 +1,11 @@
 # mcp-graphql
 
 [![smithery badge](https://smithery.ai/badge/mcp-graphql)](https://smithery.ai/server/mcp-graphql)
-Model Context Protocol server for working with GraphQL servers. It's a simple implementation using an introspection query to read the schema and one tool to query your server.
+
+Model Context Protocol server for working with GraphQL servers.
+It's a simple implementation using an introspection query to read the schema and one tool to query your server.
+
+For clients that do not support resources it also has an introspection tool call it will recommend to use first.
 
 <a href="https://glama.ai/mcp/servers/4zwa4l8utf"><img width="380" height="200" src="https://glama.ai/mcp/servers/4zwa4l8utf/badge" alt="mcp-graphql MCP server" /></a>
 
