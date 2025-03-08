@@ -93,7 +93,7 @@ server.resource(
 			if (config.schema) {
 				schema = await introspectLocalSchema(config.schema);
 			} else {
-				schema = await introspectEndpoint(config.endpoint);
+				schema = await introspectEndpoint(config.endpoint, config.headers);
 			}
 
 			return {
@@ -120,7 +120,7 @@ server.tool(
 			if (config.schema) {
 				schema = await introspectLocalSchema(config.schema);
 			} else {
-				schema = await introspectEndpoint(config.endpoint);
+				schema = await introspectEndpoint(config.endpoint, config.headers);
 			}
 
 			return {

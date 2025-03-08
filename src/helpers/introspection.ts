@@ -5,11 +5,15 @@ import { readFile } from "node:fs/promises";
  * @param endpoint - The endpoint to introspect
  * @returns The schema
  */
-export async function introspectEndpoint(endpoint: string) {
+export async function introspectEndpoint(
+	endpoint: string,
+	headers?: Record<string, string>,
+) {
 	const response = await fetch(endpoint, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
+			...headers,
 		},
 		body: JSON.stringify({
 			query: getIntrospectionQuery(),
