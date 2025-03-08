@@ -28,8 +28,18 @@ jobs:
         id: get-tag-annotation
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          TAG_MESSAGE=$(git tag -l --format='%(contents)' $TAG_NAME)
-          echo "TAG_MESSAGE=$TAG_MESSAGE" >> $GITHUB_OUTPUT
+          echo "Processing tag: $TAG_NAME"
+          # Check if tag exists and is annotated
+          if TAG_MESSAGE=$(git tag -l --format='%(contents)' $TAG_NAME 2>/dev/null); then
+            echo "Found annotated tag message"
+          else
+            echo "No tag annotation found, using empty message"
+            TAG_MESSAGE=""
+          fi
+          # Use multiline output syntax for GitHub Actions
+          echo "TAG_MESSAGE<<EOF" >> $GITHUB_OUTPUT
+          echo "$TAG_MESSAGE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
