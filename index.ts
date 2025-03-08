@@ -22,6 +22,7 @@ const GraphQLSchema = z.object({
 });
 
 const ConfigSchema = z.object({
+  name: z.string().default("mcp-graphql"),
   endpoint: z.string().url().default("http://localhost:4000/graphql"),
   headers: z.record(z.string()).default({}),
 });
@@ -30,6 +31,11 @@ type Config = z.infer<typeof ConfigSchema>;
 
 function parseArgs(): Config {
   const argv = yargs(hideBin(process.argv))
+    .option("name", {
+      type: "string",
+      description: "Name of the MCP server",
+      default: "mcp-graphql",
+    })
     .option("endpoint", {
       type: "string",
       description: "GraphQL endpoint URL",
@@ -67,7 +73,7 @@ const config = parseArgs();
 
 const server = new Server(
   {
-    name: "mcp-graphql",
+    name: config.name,
     version: getVersion(),
     description: `GraphQL client for ${config.endpoint}`,
   },
