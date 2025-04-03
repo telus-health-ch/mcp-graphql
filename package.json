@@ -4,6 +4,7 @@
   "type": "module",
   "version": "0.3.3",
   "repository": "github:blurrah/mcp-graphql",
+  "license": "MIT",
   "bin": {
     "mcp-graphql": "./dist/index.js"
   },
