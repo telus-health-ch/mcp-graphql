@@ -10,6 +10,11 @@ on:
     types: [opened, synchronize]
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
 
 jobs:
   build:
@@ -54,7 +59,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' && inputs.version != ''
     permissions:
       contents: read
       id-token: write
@@ -68,7 +73,7 @@ jobs:
       # Might be a useless optimization but I felt like not reusing the build job
       - name: Download index.js from release
         run: |
-          gh release download ${{ github.event.release.tag_name }} --dir dist --pattern "index.js"
+          gh release download ${{ github.event.release.tag_name || inputs.version }} --dir dist --pattern "index.js"
         env:
           GH_TOKEN: ${{ github.token }}
       - run: npm publish --provenance --access public
