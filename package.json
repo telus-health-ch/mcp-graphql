@@ -13,7 +13,6 @@
   ],
   "devDependencies": {
     "@graphql-tools/schema": "^10.0.21",
-    "@standard-schema/spec": "^1.0.0",
     "@types/bun": "latest",
     "@types/yargs": "17.0.33",
     "graphql-yoga": "^5.13.1",
