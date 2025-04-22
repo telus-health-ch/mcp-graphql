@@ -86,7 +86,15 @@ server.tool(
 				],
 			};
 		} catch (error) {
-			throw new Error(`Failed to introspect schema: ${error}`);
+			return {
+				isError: true,
+				content: [
+					{
+						type: "text",
+						text: `Failed to introspect schema: ${error}`,
+					},
+				],
+			};
 		}
 	},
 );
@@ -145,7 +153,17 @@ server.tool(
 			});
 
 			if (!response.ok) {
-				throw new Error(`GraphQL request failed: ${response.statusText}`);
+				const responseText = await response.text();
+
+				return {
+					isError: true,
+					content: [
+						{
+							type: "text",
+							text: `GraphQL request failed: ${response.statusText}\n${responseText}`,
+						},
+					],
+				};
 			}
 
 			const data = await response.json();
