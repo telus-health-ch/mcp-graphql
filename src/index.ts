@@ -67,7 +67,14 @@ server.resource("graphql-schema", new URL(env.ENDPOINT).href, async (uri) => {
 server.tool(
 	"introspect-schema",
 	"Introspect the GraphQL schema, use this tool before doing a query to get the schema information if you do not have it available as a resource already.",
-	{},
+	{
+		// This is a workaround to help clients that can't handle an empty object as an argument
+		// They will often send undefined instead of an empty object which is not allowed by the schema
+		__ignore__: z
+			.boolean()
+			.default(false)
+			.describe("This does not do anything"),
+	},
 	async () => {
 		try {
 			let schema: string;
