@@ -2,7 +2,7 @@
 	"name": "mcp-graphql",
 	"module": "index.ts",
 	"type": "module",
-	"version": "2.0.2",
+	"version": "2.0.3",
 	"repository": "github:blurrah/mcp-graphql",
 	"license": "MIT",
 	"bin": {
@@ -10,18 +10,18 @@
 	},
 	"files": ["dist"],
 	"devDependencies": {
-		"@graphql-tools/schema": "^10.0.21",
-		"@types/bun": "latest",
+		"@graphql-tools/schema": "^10.0.23",
+		"@types/bun": "^1.2.14",
 		"@types/yargs": "17.0.33",
-		"graphql-yoga": "^5.13.1",
-		"typescript": "5.8.2"
+		"graphql-yoga": "^5.13.5",
+		"typescript": "5.8.3"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "1.6.1",
-		"graphql": "^16.10.0",
+		"@modelcontextprotocol/sdk": "1.12.0",
+		"graphql": "^16.11.0",
 		"yargs": "17.7.2",
-		"zod": "3.24.2",
-		"zod-to-json-schema": "3.24.3"
+		"zod": "3.25.30",
+		"zod-to-json-schema": "3.24.5"
 	},
 	"scripts": {
 		"dev": "bun --watch src/index.ts",

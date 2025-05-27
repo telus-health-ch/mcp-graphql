@@ -67,10 +67,7 @@ server.resource("graphql-schema", new URL(env.ENDPOINT).href, async (uri) => {
 server.tool(
 	"introspect-schema",
 	"Introspect the GraphQL schema, use this tool before doing a query to get the schema information if you do not have it available as a resource already.",
-	{
-		// This is a fix for certain clients sending an undefined argument, breaking the tool.
-		argument: z.string().optional().describe("This doesn't do anything"),
-	},
+	{},
 	async () => {
 		try {
 			let schema: string;
