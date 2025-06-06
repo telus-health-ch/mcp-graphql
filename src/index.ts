@@ -239,19 +239,6 @@ server.tool(
 	},
 );
 
-// server.prompt (
-// 	"get-lab-results",
-// 	"Query a GraphQL endpoint with the given query and variables",
-// 	{
-// 		query: z.string().describe("The GraphQL query to execute"),
-// 		variables: z
-// 			.string()
-// 			.optional()
-// 			.describe(
-// 				"Optional JSON string of variables to use in the GraphQL query",
-// 			),
-// 	}		
-
 async function main() {
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
