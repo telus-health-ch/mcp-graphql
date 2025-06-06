@@ -8,7 +8,9 @@
 	"bin": {
 		"mcp-graphql": "./dist/index.js"
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"devDependencies": {
 		"@graphql-tools/schema": "^10.0.23",
 		"@types/bun": "^1.2.14",
@@ -18,7 +20,10 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "1.12.0",
+		"@types/jsonwebtoken": "^9.0.9",
 		"graphql": "^16.11.0",
+		"jsonwebtoken": "^9.0.2",
+		"winston": "^3.17.0",
 		"yargs": "17.7.2",
 		"zod": "3.25.30",
 		"zod-to-json-schema": "3.24.5"
@@ -26,7 +31,9 @@
 	"scripts": {
 		"dev": "bun --watch src/index.ts",
 		"build": "bun build src/index.ts --outdir dist --target node && bun -e \"require('fs').chmodSync('dist/index.js', '755')\"",
-		"start": "bun run dist/index.js"
+		"build:schema": "bun build src/dumpSchemaToFile.ts --outdir dist --target node && bun -e \"require('fs').chmodSync('dist/dumpSchemaToFile.js', '755')\"",
+		"start": "bun run dist/index.js",
+		"dump-schema": "bun run src/dumpSchemaToFile.ts"
 	},
 	"packageManager": "bun@1.2.4"
 }

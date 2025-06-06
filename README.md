@@ -85,3 +85,17 @@ Mutations are disabled by default as a security measure to prevent an LLM from m
 ## Customize for your own server
 
 This is a very generic implementation where it allows for complete introspection and for your users to do whatever (including mutations). If you need a more specific implementation I'd suggest to just create your own MCP and lock down tool calling for clients to only input specific query fields and/or variables. You can use this as a reference.
+
+
+## Telus specific notes
+
+`npm install` to install packages
+
+`bun run build` to create `dist/index.js`
+`bun run build:schema` to create `dist/dumpSchemaToFile.js`
+
+for the 2 scripts, just update your client-id to match the app you added internal api key
+
+`dump-schema.sh`
+`run-mcp-graphql.sh`
+

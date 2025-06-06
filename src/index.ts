@@ -10,6 +10,8 @@ import {
 	introspectLocalSchema,
 } from "./helpers/introspection.js";
 import { getVersion } from "./helpers/package.js" with { type: "macro" };
+import { generateJwt } from "./helpers/generateJwt.js";
+import logger from "./helpers/logger.js";
 
 // Check for deprecated command line arguments
 checkDeprecatedArguments();
@@ -32,6 +34,7 @@ const EnvSchema = z.object({
 			}
 		}),
 	SCHEMA: z.string().optional(),
+	PRIVATE_KEY_PATH: z.string(),
 });
 
 const env = EnvSchema.parse(process.env);
@@ -48,7 +51,15 @@ server.resource("graphql-schema", new URL(env.ENDPOINT).href, async (uri) => {
 		if (env.SCHEMA) {
 			schema = await introspectLocalSchema(env.SCHEMA);
 		} else {
-			schema = await introspectEndpoint(env.ENDPOINT, env.HEADERS);
+			const jwt = generateJwt();
+			if (!jwt) {
+				throw new Error("Failed to generate JWT token");
+			}
+			const headers = {
+				...env.HEADERS,
+				"Authorization": `Bearer ${jwt}`
+			};
+			schema = await introspectEndpoint(env.ENDPOINT, headers);
 		}
 
 		return {
@@ -81,7 +92,15 @@ server.tool(
 			if (env.SCHEMA) {
 				schema = await introspectLocalSchema(env.SCHEMA);
 			} else {
-				schema = await introspectEndpoint(env.ENDPOINT, env.HEADERS);
+				const jwt = generateJwt();
+				if (!jwt) {
+					throw new Error("Failed to generate JWT token");
+				}
+				const headers = {
+					...env.HEADERS,
+					"Authorization": `Bearer ${jwt}`
+				};
+				schema = await introspectEndpoint(env.ENDPOINT, headers);
 			}
 
 			return {
@@ -147,10 +166,24 @@ server.tool(
 		}
 
 		try {
+			const jwt = generateJwt();
+			if (!jwt) {
+				return {
+					isError: true,
+					content: [
+						{
+							type: "text",
+							text: "Failed to generate JWT token",
+						},
+					],
+				};
+			}
+
 			const response = await fetch(env.ENDPOINT, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
+					"Authorization": `Bearer ${jwt}`,
 					...env.HEADERS,
 				},
 				body: JSON.stringify({
@@ -205,6 +238,19 @@ server.tool(
 		}
 	},
 );
+
+// server.prompt (
+// 	"get-lab-results",
+// 	"Query a GraphQL endpoint with the given query and variables",
+// 	{
+// 		query: z.string().describe("The GraphQL query to execute"),
+// 		variables: z
+// 			.string()
+// 			.optional()
+// 			.describe(
+// 				"Optional JSON string of variables to use in the GraphQL query",
+// 			),
+// 	}		
 
 async function main() {
 	const transport = new StdioServerTransport();
