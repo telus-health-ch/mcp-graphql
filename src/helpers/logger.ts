@@ -1,5 +1,9 @@
 import winston from 'winston';
 import path from 'path';
+import fs from 'fs';
+
+// Get log directory from environment variable or use default
+const LOG_DIR = process.env.LOG_DIR || path.join(process.cwd(), 'logs');
 
 // Define log levels
 const levels = {
@@ -18,8 +22,13 @@ const format = winston.format.combine(
   ),
 );
 
-// Define the log file path
-const logFile = path.join(process.cwd(), 'logs', 'app.log');
+// Define the log directory and file path
+const logFile = path.join(LOG_DIR, 'app.log');
+
+// Create logs directory if it doesn't exist
+if (!fs.existsSync(LOG_DIR)) {
+  fs.mkdirSync(LOG_DIR, { recursive: true });
+}
 
 // Create the logger
 const logger = winston.createLogger({

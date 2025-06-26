@@ -14,13 +14,15 @@
 	"devDependencies": {
 		"@graphql-tools/schema": "^10.0.23",
 		"@types/bun": "^1.2.14",
+		"@types/express": "^5.0.3",
 		"@types/yargs": "17.0.33",
 		"graphql-yoga": "^5.13.5",
 		"typescript": "5.8.3"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "1.12.0",
+		"@modelcontextprotocol/sdk": "^1.12.1",
 		"@types/jsonwebtoken": "^9.0.9",
+		"express": "^5.1.0",
 		"graphql": "^16.11.0",
 		"jsonwebtoken": "^9.0.2",
 		"winston": "^3.17.0",
@@ -32,7 +34,10 @@
 		"dev": "bun --watch src/index.ts",
 		"build": "bun build src/index.ts --outdir dist --target node && bun -e \"require('fs').chmodSync('dist/index.js', '755')\"",
 		"build:schema": "bun build src/dumpSchemaToFile.ts --outdir dist --target node && bun -e \"require('fs').chmodSync('dist/dumpSchemaToFile.js', '755')\"",
+		"build:server": "bun build src/server.ts --outdir dist --target node",
+		"build:echo": "bun build src/echo.ts --outdir dist --target node",
 		"start": "bun run dist/index.js",
+		"start:server": "bun run dist/server.js",
 		"dump-schema": "bun run src/dumpSchemaToFile.ts"
 	},
 	"packageManager": "bun@1.2.4"

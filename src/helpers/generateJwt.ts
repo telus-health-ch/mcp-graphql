@@ -2,11 +2,28 @@ import * as fs from 'fs';
 import * as jwt from 'jsonwebtoken';
 import logger from './logger.js';
 
+// Define allowed JWT algorithms
+type JwtAlgorithm = 'HS256' | 'HS384' | 'HS512' | 'RS256' | 'RS384' | 'RS512' | 'ES256' | 'ES384' | 'ES512' | 'PS256' | 'PS384' | 'PS512' | 'none';
+
+// Define the JWT configuration interface
+export interface JwtConfiguration {
+  enabled: boolean;
+  private_key_path: string;
+  iss?: string;
+  algorithm?: JwtAlgorithm;
+}
+
 // Cache for the last generated token and its expiration
 let lastToken: string | null = null;
 let tokenExpiration: number | null = null;
 
-export function generateJwt(): string | null {
+export function generateJwt(jwtConfig?: JwtConfiguration): string | null {
+  // If JWT configuration is not provided or not enabled, return null
+  if (!jwtConfig || !jwtConfig.enabled) {
+    logger.debug('JWT generation is disabled or not configured');
+    return null;
+  }
+
   const currentTime = Math.floor(Date.now() / 1000);
   
   // Check if we have a valid cached token with more than 20 seconds until expiration
@@ -14,22 +31,32 @@ export function generateJwt(): string | null {
     logger.debug('Using cached JWT token');
     return lastToken;
   }
-  const privateKeyPath = process.env.PRIVATE_KEY_PATH;
+
+  const privateKeyPath = jwtConfig.private_key_path;
 
   if (!privateKeyPath) {
-    logger.error("Error: PRIVATE_KEY_PATH environment variable is not set");
+    logger.error("Error: private_key_path is not set in JWT configuration");
     return null;
   }
 
   try {
     const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
     const currentTime = Math.floor(Date.now() / 1000);
-    const payload = {
+    
+    // Create the payload with required claims
+    const payload: Record<string, any> = {
       iat: currentTime,
       exp: currentTime + 240 // 4 minutes (must be less than 5 minutes)
     };
+    
+    // Add issuer if provided in the configuration
+    if (jwtConfig.iss) {
+      payload.iss = jwtConfig.iss;
+    }
 
-    const token = jwt.sign(payload, privateKey, { algorithm: 'RS256' });
+    // Use algorithm from config or default to RS256
+    const algorithm = jwtConfig.algorithm || 'RS256';
+    const token = jwt.sign(payload, privateKey, { algorithm: algorithm as jwt.Algorithm });
     // Cache the token and its expiration time
     lastToken = token;
     tokenExpiration = currentTime + 240; // 4 minutes from now
