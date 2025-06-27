@@ -17,24 +17,45 @@ const EnvSchema = z.object({
 				throw new Error("HEADERS must be a valid JSON string");
 			}
 		}),
-    SCHEMA: z.string(),
-	PRIVATE_KEY_PATH: z.string(),
+	SCHEMA: z.string().default("./schema.graphql"),
+	JWT_CONFIGURATION: z
+		.string()
+		.optional()
+		.transform((val) => {
+			if (!val) return undefined;
+			try {
+				return JSON.parse(val);
+			} catch (e) {
+				throw new Error("JWT_CONFIGURATION must be a valid JSON string");
+			}
+		}),
 });
 
 const env = EnvSchema.parse(process.env);
 
-const jwt = generateJwt();
-if (!jwt) {
-    throw new Error("Failed to generate JWT token");
+async function main() {
+	try {
+		// Generate JWT if configuration is provided
+		const jwt = generateJwt(env.JWT_CONFIGURATION);
+		
+		// Add JWT to headers if available
+		const headers = {
+			...env.HEADERS,
+			...(jwt && { "Authorization": `Bearer ${jwt}` })
+		};
+
+		console.log(`Introspecting schema from ${env.ENDPOINT}...`);
+		const schema = await introspectEndpoint(env.ENDPOINT, headers);
+
+		console.log("Schema introspection complete. Writing to file...");
+		console.log(`Writing schema to ${env.SCHEMA}`);
+
+		await writeFile(env.SCHEMA, schema, "utf8");
+		console.log("Schema successfully written to file.");
+	} catch (error) {
+		console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+		process.exit(1);
+	}
 }
-const headers = {
-    ...env.HEADERS,
-    "Authorization": `Bearer ${jwt}`
-};
 
-const schema = await introspectEndpoint(env.ENDPOINT, headers);
-
-console.log("Schema introspection complete. Writing to file...");
-console.log(`Writing schema to ${env.SCHEMA}`);
-
-await writeFile(env.SCHEMA, schema, "utf8");
+main();

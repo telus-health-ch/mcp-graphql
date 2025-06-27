@@ -8,7 +8,13 @@ type JwtAlgorithm = 'HS256' | 'HS384' | 'HS512' | 'RS256' | 'RS384' | 'RS512' | 
 // Define the JWT configuration interface
 export interface JwtConfiguration {
   enabled: boolean;
-  private_key_path: string;
+  type?: 'external' | 'generated';
+  
+  // For external tokens
+  access_token?: string;
+  
+  // For generated tokens
+  private_key_path?: string;
   iss?: string;
   algorithm?: JwtAlgorithm;
 }
@@ -21,6 +27,16 @@ export function generateJwt(jwtConfig?: JwtConfiguration): string | null {
   // If JWT configuration is not provided or not enabled, return null
   if (!jwtConfig || !jwtConfig.enabled) {
     logger.debug('JWT generation is disabled or not configured');
+    return null;
+  }
+
+  // Handle external token type
+  if (jwtConfig.type === 'external') {
+    if (jwtConfig.access_token) {
+      logger.debug('Using external JWT token');
+      return jwtConfig.access_token;
+    }
+    logger.error('External JWT type specified but no access_token provided');
     return null;
   }
 

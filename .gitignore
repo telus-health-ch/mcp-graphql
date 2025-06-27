@@ -178,3 +178,8 @@ dist/
 
 # GraphQL schema for debugging
 /schema.graphql
+
+app.log
+chr-enterprise-api-schema.graphql
+chr-external-api-schema.graphql
+chr-internal-api-schema.graphql
